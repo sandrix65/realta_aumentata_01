@@ -118,6 +118,19 @@
     let client = null;
 
     testo.value = CFG.testo;
+    // Anteprima con gli stessi colori e proporzioni della realtà aumentata
+    (() => {
+      const A = CFG.aspetto || {};
+      const bordo = A.contorno ? `-1px -1px 0 ${A.contorno}, 1px -1px 0 ${A.contorno}, -1px 1px 0 ${A.contorno}, 1px 1px 0 ${A.contorno}, 0 0 10px ${A.contorno}` : '';
+      const t = $('antTesto'), n = document.querySelector('.anteprima .nome');
+      if (A.coloreScritta) t.style.color = A.coloreScritta;
+      if (A.coloreNome) n.style.color = A.coloreNome;
+      if (bordo) { t.style.textShadow = bordo; n.style.textShadow = bordo; }
+      t.style.fontSize = 32 * (A.grandezzaScritta || 1) * 0.8 + 'px';
+      n.style.fontSize = 15 * (A.grandezzaNome || 1) + 'px';
+      n.style.fontWeight = 600;
+      $('antLogo').style.maxHeight = 120 * (A.grandezzaLogo || 1) + 'px';
+    })();
     const aggiornaAnteprima = () => {
       $('antTesto').textContent = testo.value || ' ';
       $('antLogo').src = logoBozza || CFG.logo;

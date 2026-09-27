@@ -54,10 +54,22 @@ function scritta(str, o) {
   ctx.font = font;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  const y = i => pad * 0.6 + lh * (i + 0.5);
+  if (o.contorno) {
+    // Bordo chiaro attorno alle lettere: leggibili anche sopra la fotocamera
+    ctx.strokeStyle = o.contorno;
+    ctx.lineWidth = px * 0.14;
+    ctx.lineJoin = 'round';
+    ctx.shadowColor = o.contorno;
+    ctx.shadowBlur = px * 0.25;
+    lines.forEach((l, i) => ctx.strokeText(l, canvas.width / 2, y(i)));
+    ctx.shadowBlur = 0;
+  } else {
+    ctx.shadowColor = 'rgba(217,178,106,0.85)';
+    ctx.shadowBlur = px * 0.2;
+  }
   ctx.fillStyle = o.colore;
-  ctx.shadowColor = 'rgba(217,178,106,0.85)';
-  ctx.shadowBlur = px * 0.2;
-  lines.forEach((l, i) => ctx.fillText(l, canvas.width / 2, pad * 0.6 + lh * (i + 0.5)));
+  lines.forEach((l, i) => ctx.fillText(l, canvas.width / 2, y(i)));
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.minFilter = THREE.LinearFilter;
@@ -75,6 +87,8 @@ export function costruisci(dati) {
   const materiali = [];
   const M = (m, base = 1) => { m.transparent = true; m.userData.base = base; m.userData.anim = 0; materiali.push(m); return m; };
   const Z = 0.3;
+  const A = Object.assign({ coloreScritta: COLORI.avorio, coloreNome: COLORI.ottoneChiaro, contorno: '',
+    grandezzaScritta: 1, grandezzaNome: 1, grandezzaLogo: 1 }, dati.aspetto || {});
 
   // Cornice di aggancio attorno al QR
   const cornice = new THREE.Group();
@@ -88,7 +102,7 @@ export function costruisci(dati) {
   radice.add(cornice);
 
   // Scritta principale (in basso, appena sopra il QR)
-  const testo = scritta(dati.testo || ' ', { serif: true, px: 150, dim: 0.34, maxW: 1700, colore: COLORI.avorio });
+  const testo = scritta(dati.testo || ' ', { serif: true, px: 150, dim: 0.34 * A.grandezzaScritta, maxW: 1700, colore: A.coloreScritta, contorno: A.contorno });
   M(testo.material);
   let y = 0.72 + testo.scale.y / 2;
   testo.position.set(0, y, Z);
@@ -96,7 +110,7 @@ export function costruisci(dati) {
   y += testo.scale.y / 2;
 
   // Nome del partecipante, più piccolo, sopra la scritta
-  const nome = scritta(dati.nome || '', { px: 100, peso: 500, dim: 0.14, maxW: 1600, colore: COLORI.ottoneChiaro });
+  const nome = scritta(dati.nome || '', { px: 100, peso: 600, dim: 0.14 * A.grandezzaNome, maxW: 1600, colore: A.coloreNome, contorno: A.contorno });
   M(nome.material);
   y += 0.04 + nome.scale.y / 2;
   nome.position.set(0, y, Z);
@@ -107,8 +121,8 @@ export function costruisci(dati) {
   if (dati.logo && dati.logo.image) {
     const img = dati.logo.image;
     const ratio = (img.width || 1) / (img.height || 1);
-    let h = 0.75, w = h * ratio;
-    if (w > 1.8) { w = 1.8; h = w / ratio; }
+    let h = 0.75 * A.grandezzaLogo, w = h * ratio;
+    if (w > 1.8 * A.grandezzaLogo) { w = 1.8 * A.grandezzaLogo; h = w / ratio; }
     logo = new THREE.Sprite(M(new THREE.SpriteMaterial({ map: dati.logo, depthWrite: false, depthTest: false })));
     logo.renderOrder = 11;
     logo.scale.set(w, h, 1);

@@ -60,7 +60,7 @@ let inizioRivelazione = 0, rivelato = false;
 function ricostruisci(riparti = true) {
   if (contenuto) { ancora.remove(contenuto.radice); contenuto.elimina(); contenuto = null; }
   if (!idAgganciato) return;
-  contenuto = costruisci({ nome: nomeDi(idAgganciato), testo: testoComune, logo: logoTex });
+  contenuto = costruisci({ nome: nomeDi(idAgganciato), testo: testoComune, logo: logoTex, aspetto: CFG.aspetto });
   ancora.add(contenuto.radice);
   if (riparti) { inizioRivelazione = performance.now(); rivelato = false; }
 }
@@ -227,7 +227,7 @@ async function avvia(daUtente) {
   try { await navigator.wakeLock?.request('screen'); } catch (e) {}
   await Promise.all([
     document.fonts.load('150px "Instrument Serif"'),
-    document.fonts.load('500 100px "Figtree"'),
+    document.fonts.load('600 100px "Figtree"'),
   ]).catch(() => {});
   document.body.classList.add('attiva');
   await preparaRilevatore();
