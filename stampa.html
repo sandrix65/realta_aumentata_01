@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stampa segnaposto</title>
+  <style>
+    @font-face { font-family: "Instrument Serif"; font-weight: 400; src: url(fonts/instrument-serif-latin-400-normal.woff2) format("woff2"); }
+    @font-face { font-family: "Instrument Serif"; font-style: italic; font-weight: 400; src: url(fonts/instrument-serif-latin-400-italic.woff2) format("woff2"); }
+    @font-face { font-family: "Figtree"; font-weight: 300 900; src: url(fonts/figtree-latin-wght-normal.woff2) format("woff2"); }
+    :root { --inchiostro: #14203A; --ottone: #B8904A; --nebbia: #5E687C; }
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: "Figtree", system-ui, sans-serif; color: var(--inchiostro); background: #EEF0F3; }
+    .pannello { max-width: 900px; margin: 0 auto; padding: 40px 24px 24px; }
+    h1 { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: 48px; line-height: 1; margin-bottom: 12px; }
+    .pannello p { font-size: 16px; line-height: 1.55; color: var(--nebbia); max-width: 62ch; margin-bottom: 20px; }
+    label { display: block; font-weight: 600; font-size: 15px; margin-bottom: 8px; }
+    .riga { display: flex; gap: 10px; flex-wrap: wrap; }
+    input { flex: 1; min-width: 260px; font: 16px "Figtree", sans-serif; padding: 14px; border: 1px solid #C5CAD3; border-radius: 4px; }
+    button { font: 600 16px "Figtree", sans-serif; padding: 14px 22px; border: 0; border-radius: 4px; background: var(--inchiostro); color: #fff; cursor: pointer; }
+    button.secondario { background: transparent; color: var(--inchiostro); box-shadow: inset 0 0 0 1px var(--inchiostro); }
+    button:focus-visible, input:focus-visible { outline: 2px solid var(--ottone); outline-offset: 2px; }
+    .avviso { font-size: 14px; color: #9A4B2F; margin-top: 10px; min-height: 1em; }
+
+    .fogli { max-width: 900px; margin: 0 auto; padding: 8px 24px 60px; display: grid; grid-template-columns: repeat(auto-fill, 9cm); gap: 10mm; justify-content: center; }
+    .carta {
+      width: 9cm; height: 11cm; background: #fff; border-radius: 3mm;
+      padding: 7mm 6mm 6mm; display: flex; flex-direction: column; align-items: center; text-align: center;
+      box-shadow: 0 1px 3px rgba(20, 32, 58, 0.15); break-inside: avoid;
+    }
+    .carta .num { font-size: 10pt; color: var(--nebbia); letter-spacing: 0.02em; }
+    .carta .nome { font-family: "Instrument Serif", Georgia, serif; font-size: 24pt; line-height: 1.05; margin: 1mm 0 4mm; }
+    .carta svg { width: 5.6cm; height: 5.6cm; display: block; }
+    .carta .guida { font-family: "Instrument Serif", serif; font-style: italic; font-size: 12pt; margin-top: auto; color: var(--inchiostro); }
+    .carta .filo { width: 12mm; height: 0.6mm; background: var(--ottone); margin: 3mm 0 2mm; }
+
+    .centro {
+      grid-column: 1 / -1; justify-self: center;
+      width: 19cm; background: #fff; border-radius: 3mm; padding: 14mm 10mm 12mm;
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+      box-shadow: 0 1px 3px rgba(20, 32, 58, 0.15); break-before: page; break-inside: avoid;
+    }
+    .centro svg { width: 16cm; height: 16cm; }
+    .centro .nome { font-family: "Instrument Serif", serif; font-size: 30pt; margin-bottom: 6mm; }
+    .centro .guida { font-size: 11pt; color: var(--nebbia); margin-top: 6mm; max-width: 60ch; }
+
+    @page { size: A4; margin: 10mm; }
+    @media print {
+      body { background: #fff; }
+      .pannello { display: none; }
+      .fogli { padding: 0; gap: 8mm; grid-template-columns: repeat(2, 9cm); }
+      .carta, .centro { box-shadow: 0 0 0 0.2mm #C5CAD3; }
+    }
+  </style>
+</head>
+<body>
+  <section class="pannello">
+    <h1>Segnaposto</h1>
+    <p>Inserisci l'indirizzo dove hai pubblicato la cartella (deve iniziare con https). Ogni codice identifica solo la postazione: scritta e logo li cambi dalla regia, quindi i segnaposto si stampano una volta sola. I nomi invece si cambiano in config.js, sempre senza ristampare. Stampa su cartoncino opaco, senza ridimensionare la pagina.</p>
+    <label for="url">Indirizzo della sala</label>
+    <div class="riga">
+      <input id="url" type="url" inputmode="url" autocomplete="off">
+      <button id="genera" type="button">Aggiorna i codici</button>
+      <button id="stampa" class="secondario" type="button">Stampa</button>
+    </div>
+    <p class="avviso" id="avviso"></p>
+  </section>
+  <section class="fogli" id="fogli"></section>
+
+  <script src="config.js"></script>
+  <script src="vendor/qrcode.js"></script>
+  <script>
+    const CFG = window.SALA_CONFIG;
+    const campo = document.getElementById('url');
+    const base = location.href.replace(/[^/]*([?#].*)?$/, '');
+    campo.value = base;
+
+    function svgQR(testo) {
+      const q = qrcode(0, 'M'); q.addData(testo); q.make();
+      const n = q.getModuleCount(), m = 4, tot = n + m * 2;
+      let d = '';
+      for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c + m} ${r + m}h1v1h-1z`;
+      return `<svg viewBox="0 0 ${tot} ${tot}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" role="img" aria-label="Codice QR"><rect width="${tot}" height="${tot}" fill="#fff"/><path d="${d}" fill="#14203A"/></svg>`;
+    }
+    function link(p) {
+      const u = new URL(campo.value.trim() || base);
+      if (!u.pathname.endsWith('/') && !u.pathname.endsWith('.html')) u.pathname += '/';
+      u.search = '?p=' + encodeURIComponent(p);
+      return u.toString();
+    }
+    function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+    function genera() {
+      const avviso = document.getElementById('avviso');
+      avviso.textContent = '';
+      try { new URL(campo.value.trim()); } catch (e) { avviso.textContent = 'L\'indirizzo non è valido. Esempio: https://sala.tuodominio.it/'; return; }
+      if (!campo.value.trim().startsWith('https://')) avviso.textContent = 'Attenzione: senza https i telefoni non apriranno la fotocamera.';
+      let html = '';
+      for (const [n, d] of Object.entries(CFG.postazioni)) {
+        html += `<article class="carta"><div class="num">Postazione</div><div class="nome">${esc(n)}</div>${svgQR(link(n))}<div class="filo"></div><div class="guida">Inquadra con la fotocamera del telefono</div></article>`;
+      }
+      document.getElementById('fogli').innerHTML = html;
+    }
+    document.getElementById('genera').onclick = genera;
+    document.getElementById('stampa').onclick = () => window.print();
+    campo.addEventListener('keydown', e => { if (e.key === 'Enter') genera(); });
+    genera();
+  </script>
+</body>
+</html>

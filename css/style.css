@@ -1,0 +1,95 @@
+@font-face { font-family: "Instrument Serif"; font-style: normal; font-weight: 400; font-display: swap; src: url(../fonts/instrument-serif-latin-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "Instrument Serif"; font-style: italic; font-weight: 400; font-display: swap; src: url(../fonts/instrument-serif-latin-400-italic.woff2) format("woff2"); }
+@font-face { font-family: "Figtree"; font-style: normal; font-weight: 300 900; font-display: swap; src: url(../fonts/figtree-latin-wght-normal.woff2) format("woff2"); }
+
+:root {
+  --inchiostro: #14203A;
+  --inchiostro-2: #1B2A47;
+  --ottone: #D9B26A;
+  --ottone-chiaro: #F2D49A;
+  --avorio: #F7ECD6;
+  --nebbia: #9FA9BC;
+  --serif: "Instrument Serif", Georgia, serif;
+  --sans: "Figtree", "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--inchiostro);
+  color: var(--avorio);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+
+#stage { position: fixed; overflow: hidden; }
+#stage video, #stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+#stage video { object-fit: fill; }
+
+/* Leggera vignettatura: la fotocamera diventa "sala" */
+#veil {
+  position: fixed; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 45%, transparent 45%, rgba(20, 32, 58, 0.55) 100%);
+  opacity: 0; transition: opacity 1.2s ease;
+}
+body.attiva #veil { opacity: 1; }
+
+#intro {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: max(28px, env(safe-area-inset-top)) 28px max(40px, calc(env(safe-area-inset-bottom) + 28px));
+  background:
+    radial-gradient(circle at 78% 22%, rgba(217, 178, 106, 0.22), transparent 42%),
+    var(--inchiostro);
+  transition: opacity 0.9s ease, visibility 0.9s;
+}
+body.attiva #intro { opacity: 0; visibility: hidden; }
+#intro .posto { font-size: 15px; color: var(--ottone-chiaro); letter-spacing: 0.02em; margin-bottom: 18px; }
+#intro h1 {
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(44px, 12vw, 76px); line-height: 0.98; letter-spacing: -0.01em;
+  max-width: 11ch; margin-bottom: 22px;
+}
+#intro p.guida { font-size: 17px; line-height: 1.5; color: var(--nebbia); max-width: 32ch; margin-bottom: 34px; }
+#intro button {
+  appearance: none; border: 0; cursor: pointer;
+  font: 600 17px/1 var(--sans);
+  color: var(--inchiostro); background: var(--ottone);
+  padding: 20px 26px; border-radius: 4px;
+  align-self: flex-start;
+  box-shadow: 0 0 0 0 rgba(217, 178, 106, 0.5);
+  animation: respiro 2.8s ease-in-out infinite;
+}
+#intro button:focus-visible { outline: 2px solid var(--avorio); outline-offset: 4px; }
+#intro button:disabled { opacity: 0.6; animation: none; }
+#intro .errore { margin-top: 18px; font-size: 15px; line-height: 1.5; color: #F5B4A0; max-width: 36ch; min-height: 1em; }
+@keyframes respiro { 50% { box-shadow: 0 0 0 14px rgba(217, 178, 106, 0); } }
+
+#hint {
+  position: fixed; left: 50%; bottom: max(34px, calc(env(safe-area-inset-bottom) + 20px));
+  transform: translateX(-50%);
+  font-family: var(--serif); font-style: italic; font-size: 21px;
+  color: var(--avorio); text-align: center; width: max-content; max-width: 88vw;
+  padding: 12px 20px; border-radius: 40px;
+  background: rgba(20, 32, 58, 0.62);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  opacity: 0; transition: opacity 0.6s ease; pointer-events: none;
+}
+#hint.visibile { opacity: 1; }
+
+#conn {
+  position: fixed; top: max(16px, env(safe-area-inset-top)); left: 16px;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--nebbia);
+  padding: 7px 12px 7px 10px; border-radius: 20px; background: rgba(20, 32, 58, 0.5);
+  opacity: 0; transition: opacity 0.6s;
+}
+body.attiva #conn { opacity: 1; }
+#conn::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #8A8F99; }
+#conn[data-stato="on"]::before { background: var(--ottone); box-shadow: 0 0 10px var(--ottone); }
+#conn[data-stato="off"]::before { background: #C9705A; }
+
+@media (prefers-reduced-motion: reduce) {
+  #intro button { animation: none; }
+}
